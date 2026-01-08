@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procurement Dashboard - Precise UI Match</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --sidebar-bg: #1c2536;
+            --sidebar-text: #9ea4ad;
+            --primary-blue: #2f54eb;
+            --bg-body: #f9fafb;
+            --dark-header: #1c2536;
+            --border-color: #eaecf0;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: #101828; margin: 0; overflow-x: hidden; }
+
+        /* --- Sidebar & Layout Logic --- */
+        #wrapper { display: flex; width: 100%; min-height: 100vh; position: relative; }
+        
+        #sidebar-wrapper { 
+            width: 260px; 
+            background: var(--sidebar-bg); 
+            flex-shrink: 0; 
+            transition: all 0.3s ease; 
+            z-index: 1050; 
+            position: relative;
+        }
+
+        #page-content-wrapper { flex-grow: 1; width: 100%; transition: all 0.3s ease; }
+
+        /* Mobile Sidebar States */
+        @media (max-width: 991.98px) {
+            #sidebar-wrapper {
+                position: fixed;
+                left: -260px;
+                height: 100%;
+            }
+            #wrapper.toggled #sidebar-wrapper {
+                left: 0;
+            }
+            #sidebar-overlay {
+                display: none;
+                position: fixed;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+            #wrapper.toggled #sidebar-overlay {
+                display: block;
+            }
+        }
+
+        .sidebar-heading { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .user-avatar { width: 32px; height: 32px; background: #4e5d78; border-radius: 8px; font-weight: bold; }
+        
+        .nav-label { font-size: 11px; text-transform: uppercase; color: #6b7280; font-weight: 700; padding: 20px 20px 10px; letter-spacing: 0.5px; }
+        
+        .nav-link-custom {
+            padding: 10px 20px; color: var(--sidebar-text); text-decoration: none;
+            display: flex; align-items: center; font-size: 14px; transition: 0.2s; cursor: pointer;
+        }
+        .nav-link-custom:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .nav-link-custom.active { color: #fff; background: rgba(255,255,255,0.1); border-radius: 8px; margin: 0 10px; }
+        .sub-nav { padding-left: 20px; display: block; transition: all 0.3s; }
+        .sub-nav.hidden { display: none; }
+
+        /* --- Table Styling --- */
+        .card-custom { border: 1px solid var(--border-color); border-radius: 12px; background: #fff; overflow: hidden; }
+        
+        .table thead th { 
+            background-color: var(--dark-header); 
+            color: #fff; 
+            font-weight: 500; 
+            font-size: 13px; 
+            padding: 14px 16px;
+            border: none;
+        }
+        .table tbody td { padding: 16px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+        .in-progress { background: #eff8ff; color: #175cd3; border: 1px solid #b2ddff; }
+        
+        /* --- Expanded Content --- */
+        .expanded-container { background-color: #f8fbff; padding: 24px; }
+        .expanded-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .expanded-label { color: #667085; font-size: 12px; margin-bottom: 4px; }
+        .expanded-value { color: #101828; font-weight: 600; font-size: 14px; }
+        .dashed-line { border-top: 1px dashed #d0d5dd; margin: 20px 0; }
+
+        /* --- Custom Pagination --- */
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; flex-wrap: wrap; gap: 15px; }
+        .page-link { color: #344054; border: 1px solid #d0d5dd; padding: 8px 12px; border-radius: 8px !important; margin: 0 2px; }
+        .page-item.active .page-link { background-color: #1c2536; color: white; border-color: #1c2536; }
+        .btn-page-nav { background: #fff; border: 1px solid #d0d5dd; border-radius: 8px; padding: 8px 12px; color: #344054; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        
+        .badge-new { background: #f04438; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; position: absolute; top: -8px; right: -8px; }
+        
+        /* Utility */
+        .burger-btn { font-size: 24px; cursor: pointer; display: none; }
+        @media (max-width: 991.98px) {
+            .burger-btn { display: block; }
+            .search-box { display: none !important; }
+        }
+
+
+
+
+
+        /*for model message*/
+
+        /* Chat UI Custom Styles */
+.chat-bubble-buyer {
+    background: #f4f7f9;
+    border-radius: 12px 0px 12px 12px;
+    font-size: 14px;
+    max-width: 320px;
+    color: #333;
+}
+
+.chat-bubble-seller {
+    background: #e9f5ff;
+    border-radius: 0px 12px 12px 12px;
+    font-size: 14px;
+    max-width: 320px;
+    color: #333;
+}
+
+.modal-content {
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.btn-close:focus {
+    box-shadow: none;
+}
+
+.bi-chat-left-dots {
+    cursor: pointer;
+}
+    </style>
+</head>
+<body>
+
+<div id="wrapper">
+    <div id="sidebar-overlay"></div>
+
+    <div id="sidebar-wrapper">
+        <div class="sidebar-heading d-flex align-items-center text-white">
+            <div class="user-avatar d-flex align-items-center justify-content-center me-3">WA</div>
+            <div class="overflow-hidden">
+                <div class="fw-bold small text-truncate">Watson An...</div>
+                <div class="text-muted" style="font-size: 11px;">watsonbuyer@gm...</div>
+            </div>
+        </div>
+        
+        <div class="nav-label">Procurement</div>
+        <div id="quotation-toggle" class="nav-link-custom">
+            <i class="bi bi-file-earmark-text me-3"></i> Quotation 
+            <i class="bi bi-chevron-down ms-auto small"></i>
+        </div>
+        <div id="quotation-subnav" class="sub-nav">
+            <a href="/backup.html" class="nav-link-custom active"><i class="bi bi-broadcast me-3"></i> Broadcast RFQ</a>
+            <a href="#" class="nav-link-custom"><i class="bi bi-bullseye me-3"></i> Direct RFQ</a>
+        </div>
+        <a href="#" class="nav-link-custom"><i class="bi bi-box-seam me-3"></i> Orders Management</a>
+        <a href="#" class="nav-link-custom"><i class="bi bi-journal-text me-3"></i> Samples Request</a>
+        <a href="#" class="nav-link-custom"><i class="bi bi-check-circle me-3"></i> My Approved Products</a>
+
+        <div class="nav-label">Account Management</div>
+        <a href="#" class="nav-link-custom"><i class="bi bi-person me-3"></i> Profile</a>
+        <a href="#" class="nav-link-custom"><i class="bi bi-geo-alt me-3"></i> Addresses</a>
+        <a href="#" class="nav-link-custom"><i class="bi bi-people me-3"></i> Manage Staff</a>
+
+        <div class="nav-label">Selling</div>
+        <a href="#" class="nav-link-custom"><i class="bi bi-megaphone me-3"></i> Become a Seller</a>
+    </div>
+
+    <div id="page-content-wrapper">
+        <nav class="navbar bg-white border-bottom px-4 py-3">
+            <div class="d-flex align-items-center w-100">
+                <i class="bi bi-list burger-btn me-3" id="menu-toggle"></i>
+                <h5 class="mb-0 fw-bold">My Quotation</h5>
+                <div class="ms-auto d-flex align-items-center gap-4">
+                    <div class="input-group search-box" style="width: 300px;">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control bg-light border-0" placeholder="Search our marketplace">
+                    </div>
+                    <div class="position-relative">
+                        <i class="bi bi-cart3 fs-5"></i>
+                        <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" style="font-size: 10px;">01</span>
+                    </div>
+                    <img src="https://i.pravatar.cc/32" class="rounded-circle border" alt="User">
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid p-4">
+            <div class="mb-4">
+                <div class="text-muted small mb-1">My Requests > <span class="text-dark fw-medium">ID: 501</span></div>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <div class="text-muted small">Request ID: 501</div>
+                        <h2 class="fw-bold mb-0">Sodium Benzoate</h2>
+                        <div class="mt-2">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">● Active</span>
+                            <span class="text-muted small ms-2">11/25/2025 (7 days remaining)</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm px-3 rounded-pill">Show more <i class="bi bi-chevron-down ms-1"></i></button>
+                </div>
+            </div>
+
+            <div class="card card-custom">
+                <div class="table-responsive">
+                    <table id="proposalsTable" class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Seller</th>
+                                <th>Product</th>
+                                <th>Valid Until</th>
+                                <th>Status</th>
+                                <th>Lead Time</th>
+                                <th>Total Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-child-value="child_1">
+                                <td>01</td>
+                                <td>
+                                    <div class="fw-bold text-primary text-decoration-underline">Gulf Chemicals LLC</div>
+                                    <div class="text-muted small">Manufacture</div>
+                                </td>
+                                <td><span class="text-primary text-decoration-underline">Acetic acid</span></td>
+                                <td>25 Nov 2025</td>
+                                <td><span class="status-pill in-progress">● In progress</span></td>
+                                <td>12 Days</td>
+                                <td>
+                                    <div class="fw-bold">4870 SAR</div>
+                                    <div class="text-muted small">$1,720 USD</div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="position-relative"><i class="bi bi-chat-left-dots fs-5"></i><span class="badge-new">New</span></div>
+                                        <i class="bi bi-chevron-down expand-btn fs-5" style="cursor:pointer;"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="pagination-container">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small">Showing page</span>
+                    <select class="form-select form-select-sm w-auto"><option>01</option></select>
+                    <span class="small">of 01</span>
+                </div>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <a href="#" class="btn-page-nav"><i class="bi bi-chevron-double-left"></i></a>
+                    <a href="#" class="btn-page-nav"><i class="bi bi-chevron-left"></i> Previous</a>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item d-none d-sm-block"><span class="px-2">....</span></li>
+                        <li class="page-item d-none d-sm-block"><a class="page-link" href="#">10</a></li>
+                    </ul>
+                    <a href="#" class="btn-page-nav">Next <i class="bi bi-chevron-right"></i></a>
+                    <a href="#" class="btn-page-nav"><i class="bi bi-chevron-double-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<div class="modal fade" id="chatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0" style="border-radius: 20px; overflow: hidden;">
+            <div class="p-4 border-bottom position-relative">
+                <h4 class="fw-bold mb-1">Chats</h4>
+                <p class="text-muted small mb-0">Your messages, all in one place.</p>
+                <button type="button" class="btn-close position-absolute" style="top: 25px; right: 25px;" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="px-4 py-2 d-flex align-items-center justify-content-between" style="background: #1c2536; color: white;">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="https://i.pravatar.cc/32?img=12" class="rounded-circle" width="32" height="32">
+                    <span class="fw-medium">Kenyon Seller</span>
+                </div>
+                <div class="position-relative w-50">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+                    <input type="text" class="form-control form-control-sm bg-white border-0 ps-5" placeholder="Search chats @ Kenyon Seller" style="border-radius: 20px;">
+                </div>
+            </div>
+
+            <div class="modal-body p-4" style="background: #fff; height: 450px; overflow-y: auto;">
+                <div class="text-center my-3"><span class="badge bg-light text-dark border px-3 rounded-pill">Today</span></div>
+
+                <div class="d-flex justify-content-end mb-4 gap-2">
+                    <div class="text-end">
+                        <div class="d-flex justify-content-end align-items-center gap-2 mb-1">
+                            <span class="fw-bold small">Alex John</span>
+                            <span class="text-muted" style="font-size: 10px;">2:20pm</span>
+                        </div>
+                        <div class="chat-bubble-buyer p-3">
+                            Hello, I saw your listing for Sodium Benzoate. Could you confirm if you have stock available for immediate dispatch?
+                        </div>
+                    </div>
+                    <img src="https://i.pravatar.cc/32?img=5" class="rounded-circle align-self-start" width="32">
+                </div>
+
+                <div class="d-flex mb-4 gap-2">
+                    <img src="https://i.pravatar.cc/32?img=12" class="rounded-circle align-self-start" width="32">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="fw-bold small">Kenyon Seller</span>
+                            <span class="text-muted" style="font-size: 10px;">2:20pm</span>
+                        </div>
+                        <div class="chat-bubble-seller p-3">
+                            Yes, we do. Could you share the required quantity?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mb-4 gap-2">
+                    <div class="text-end">
+                        <div class="d-flex justify-content-end align-items-center gap-2 mb-1">
+                            <span class="fw-bold small">Alex John</span>
+                            <span class="text-muted" style="font-size: 10px;">2:20pm</span>
+                        </div>
+                        <div class="chat-bubble-buyer p-3">200 litters</div>
+                    </div>
+                    <img src="https://i.pravatar.cc/32?img=5" class="rounded-circle align-self-start" width="32">
+                </div>
+            </div>
+
+            <div class="p-4 border-top">
+                <div class="input-group border rounded-pill p-1">
+                    <span class="input-group-text bg-transparent border-0"><i class="bi bi-chat-dots text-muted"></i></span>
+                    <input type="text" class="form-control border-0 shadow-none" placeholder="Message Kenyon Seller">
+                    <button class="btn btn-dark rounded-pill px-4 py-2 d-flex align-items-center gap-2" type="button" style="background: #1c2536;">
+                        <i class="bi bi-send-fill"></i> Send message
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<script type="text/template" id="child_1">
+    <div class="expanded-container">
+        <div class="expanded-grid">
+            <div><div class="expanded-label">Payment Terms</div><div class="expanded-value">CIA (Cash in Advance)</div></div>
+            <div><div class="expanded-label">Currency</div><div class="expanded-value">USD</div></div>
+            <div><div class="expanded-label">Quantity</div><div class="expanded-value">100</div></div>
+            <div><div class="expanded-label">Unit</div><div class="expanded-value">100</div></div>
+            <div><div class="expanded-label">Rate</div><div class="expanded-value">170</div></div>
+            <div><div class="expanded-label">Sub total</div><div class="expanded-value">$1,720 USD</div></div>
+        </div>
+        <div class="dashed-line"></div>
+        <div class="d-flex justify-content-end align-items-center gap-sm-5 gap-3 flex-wrap">
+            <div class="text-end">
+                <div class="expanded-label">VAT</div>
+                <div class="expanded-value">0.00%</div>
+            </div>
+            <div class="text-end">
+                <div class="expanded-label">Total</div>
+                <div class="expanded-value fs-5">$1,720 USD</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-dark px-4 py-2">Accept</button>
+                <button class="btn btn-outline-secondary px-4 py-2">Reject</button>
+            </div>
+        </div>
+    </div>
+</script>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#proposalsTable').DataTable({ "dom": 't', "ordering": false });
+
+        // Sidebar Toggle Logic
+        $("#menu-toggle, #sidebar-overlay").click(function(e) {
+            e.preventDefault();
+            $("#wrapper").toggleClass("toggled");
+        });
+
+        // Sidebar Accordion Logic
+        $('#quotation-toggle').click(function() {
+            $('#quotation-subnav').toggleClass('hidden');
+            $(this).find('.bi-chevron-down').toggleClass('bi-chevron-up');
+        });
+
+        // Table Expansion Logic
+        $('#proposalsTable tbody').on('click', '.expand-btn', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            if (row.child.isShown()) {
+                row.child.hide();
+                $(this).removeClass('bi-chevron-up').addClass('bi-chevron-down');
+            } else {
+                row.child($('#child_1').html(), 'p-0').show();
+                $(this).removeClass('bi-chevron-down').addClass('bi-chevron-up');
+            }
+        });
+
+
+// Optimized Chat Modal Logic
+$('#proposalsTable').on('click', '.bi-chat-left-dots', function() {
+    var modalElement = document.getElementById('chatModal');
+    var instance = bootstrap.Modal.getInstance(modalElement);
+    if (!instance) {
+        instance = new bootstrap.Modal(modalElement);
+    }
+    instance.show();
+});
+
+
+
+    });
+</script>
+</body>
+</html>
